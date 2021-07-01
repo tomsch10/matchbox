@@ -30,8 +30,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static ca.uhn.fhir.util.TestUtil.waitForSize;
+import static java.lang.Thread.sleep;
 import static java.util.Comparator.comparing;
 import static org.awaitility.Awaitility.await;
+import static org.awaitility.Awaitility.pollInSameThread;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -49,8 +51,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 		"spring.main.allow-bean-definition-overriding=true"
 	})
 public class ExampleServerR4IT {
-
-	private static final org.slf4j.Logger ourLog = org.slf4j.LoggerFactory.getLogger(ExampleServerDstu2IT.class);
+	private static final org.slf4j.Logger ourLog = org.slf4j.LoggerFactory.getLogger(ExampleServerR4IT.class);
 	private IGenericClient ourClient;
 	private FhirContext ourCtx;
 
@@ -61,8 +62,8 @@ public class ExampleServerR4IT {
 	@Test
 	@Order(0)
 	void testCreateAndRead() {
-
-		String methodName = "testCreateResourceConditional";
+		String methodName = "testCreateAndRead";
+		ourLog.info("Entering " + methodName + "()...");
 
 		Patient pt = new Patient();
 		pt.setActive(true);
@@ -75,12 +76,12 @@ public class ExampleServerR4IT {
 		assertEquals(methodName, pt2.getName().get(0).getFamily());
 
 
-		// Test MDM
-
 		// Wait until the MDM message has been processed
-		await().until(() -> getPatients().size(), equalTo(2));
-		List<Patient> persons = getPatients();
-		Patient goldenRecord = persons.get(0);
+		await().until(() -> {
+			sleep(1000);
+			return getGoldenResourcePatient() != null;
+		});
+		Patient goldenRecord = getGoldenResourcePatient();
 
 		// Verify that a golden record Patient was created
 		assertNotNull(goldenRecord.getMeta().getTag("http://hapifhir.io/fhir/NamingSystem/mdm-record-status", "GOLDEN_RECORD"));
@@ -91,6 +92,17 @@ public class ExampleServerR4IT {
 		List<Patient> retVal = BundleUtil.toListOfResourcesOfType(ourCtx, bundle, Patient.class);
 		retVal.sort(comparing(o -> ((Patient) o).getMeta().getLastUpdated()).reversed());
 		return retVal;
+	}
+	private Patient getGoldenResourcePatient() {
+		Bundle bundle = ourClient.search()
+			.forResource(Patient.class)
+			.withTag("http://hapifhir.io/fhir/NamingSystem/mdm-record-status", "GOLDEN_RECORD")
+			.cacheControl(new CacheControlDirective().setNoCache(true)).returnBundle(Bundle.class).execute();
+		if (bundle.getEntryFirstRep() != null) {
+			return (Patient) bundle.getEntryFirstRep().getResource();
+		} else {
+			return null;
+		}
 	}
 
 	@Test
@@ -139,7 +151,7 @@ public class ExampleServerR4IT {
 		ourClient.create().resource(obs).execute();
 
 		// Give some time for the subscription to deliver
-		Thread.sleep(2000);
+		sleep(2000);
 
 		/*
 		 * Ensure that we receive a ping on the websocket
@@ -165,6 +177,6 @@ public class ExampleServerR4IT {
 		ourCtx.getRestfulClientFactory().setSocketTimeout(1200 * 1000);
 		String ourServerBase = "http://localhost:" + port + "/fhir/";
 		ourClient = ourCtx.newRestfulGenericClient(ourServerBase);
-		ourClient.registerInterceptor(new LoggingInterceptor(true));
+//		ourClient.registerInterceptor(new LoggingInterceptor(false));
 	}
 }

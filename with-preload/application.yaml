@@ -3,19 +3,34 @@ hapi:
     implementationguides:
       core:
         name: ch.fhir.ig.ch-core
-        version: 1.2.0
+        version: 2.0.0
       eprterm:
         name: ch.fhir.ig.ch-epr-term
-        version: 2.0.4
+        version: 2.0.5
       emed:
         name: ch.fhir.ig.ch-emed
-        version: 0.2.0
+        version: 1.0.0
       vacd:
         name: ch.fhir.ig.ch-vacd
-        version: 0.1.0
+        version: 1.0.0
       atc:
         name: ch.fhir.ig.ch-atc
         version: 3.1.0
-      mhealth:
+      sdc:
+        name: hl7.fhir.uv.sdc
+        version: 2.7.0
+      chorf:
+        name: ch.fhir.ig.ch-orf
+        version: 0.10.0
+      chradorder:
+        name: ch.fhir.ig.ch-rad-order
+        version: 0.1.0
+      chetoc:
+        name: ch.fhir.ig.ch-etoc
+        version: 0.1.0
+      mhd:
+        name: ihe.mhd.fhir
+        version: 4.0.1
+      cheprmhealth:
         name: ch.fhir.ig.ch-epr-mhealth
-        version: 0.1.2
+        version: 0.2.0

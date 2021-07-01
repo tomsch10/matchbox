@@ -18,6 +18,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
+import org.hl7.fhir.instance.model.api.IBaseOperationOutcome;
 import org.hl7.fhir.r4.model.OperationOutcome;
 import org.hl7.fhir.r4.model.OperationOutcome.IssueSeverity;
 import org.hl7.fhir.r4.model.OperationOutcome.OperationOutcomeIssueComponent;
@@ -48,7 +49,7 @@ import ch.ahdis.matchbox.util.PackageCacheInitializer;
  * @author oliveregger
  */
 @RunWith(Parameterized.class)
-@Ignore
+//@Ignore
 public class IgValidateR4TestStandalone {
 
   static private Set<String> loadedIgs = new HashSet<String>();
@@ -251,45 +252,57 @@ public class IgValidateR4TestStandalone {
     log.debug("validating resource" + resource.getId() + "with" + targetServer);
     FhirContext contextR4 = FhirVersionEnum.R4.newContext();
 
-    boolean skip = "ch.fhir.ig.ch-core#1.0.0-PractitionerRole-HPWengerRole".equals(name); // wrong value inside
-    skip = skip || "ch.fhir.ig.ch-epr-mhealth#0.1.2-Bundle-2-7-BundleProvideDocument".equals(name); // error in testcase, however cannot reproduce yet directly ???
+    boolean skip = "none".equals(name); // <Parameters xmlns="http://hl7.org/fhir"><parameter><name value="return"/><resource><OperationOutcome xmlns="http://hl7.org/fhir"><id value="10fdf49faf4469ddbd95ae099f548d73962db39cdde207a8ecee5cf988f0857c"/><text><status value="generated"/><div xmlns="http://www.w3.org/1999/xhtml"> <h1>Operation Outcome</h1> <table border="0"> <tr> <td style="font-weight: bold;">WARNING</td> <td>[Consent.policyRule, Line 1, Col 2038]</td> <td> <pre>None of the codings provided are in the value set http://hl7.org/fhir/ValueSet/consent-policy (http://hl7.org/fhir/ValueSet/consent-policy), and a coding should come from this value set unless it has no suitable code (note that the validator cannot judge what is suitable) (codes = http://terminology.hl7.org/CodeSystem/consentpolicycodes#ch-epr)</pre> </td> </tr> <tr> <td style="font-weight: bold;">ERROR</td> <td>[Consent.policyRule.coding[0], Line 1, Col 2046]</td> <td> <pre>Unknown code 'http://terminology.hl7.org/CodeSystem/consentpolicycodes#ch-epr' for 'http://terminology.hl7.org/CodeSystem/consentpolicycodes#ch-epr'</pre> </td> </tr> </table> </div></text><issue><extension url="http://hl7.org/fhir/StructureDefinition/operationoutcome-issue-line"><valueInteger value="1"/></extension><severity value="warning"/><code value="processing"/><diagnostics value="None of the codings provided are in the value set http://hl7.org/fhir/ValueSet/consent-policy (http://hl7.org/fhir/ValueSet/consent-policy), and a coding should come from this value set unless it has no suitable code (note that the validator cannot judge what is suitable) (codes = http://terminology.hl7.org/CodeSystem/consentpolicycodes#ch-epr)"/><location value="Consent.policyRule"/><location value="Line 1, Col 2038"/></issue><issue><extension url="http://hl7.org/fhir/StructureDefinition/operationoutcome-issue-line"><valueInteger value="1"/></extension><severity value="error"/><code value="processing"/><diagnostics value="Unknown code 'http://terminology.hl7.org/CodeSystem/consentpolicycodes#ch-epr' for 'http://terminology.hl7.org/CodeSystem/consentpolicycodes#ch-epr'"/><location value="Consent.policyRule.coding[0]"/><location value="Line 1, Col 2046"/></issue></OperationOutcome></resource></parameter></Parameters>
+
+    
+    
     if (skip) {
       log.error("ignoring validation for " + name);
       Assume.assumeFalse(skip);
     }
+    
+    ValidationClient validationClient = new ValidationClient(contextR4, this.targetServer);
+
+      OperationOutcome outcome = (OperationOutcome) validationClient.validate(contextR4.newXmlParser().encodeResourceToString(resource),null);
+      if (getValidationFailures(outcome) > 0) {
+        log.debug(contextR4.newXmlParser().encodeResourceToString(resource));
+        log.debug("Validation Errors " + getValidationFailures(outcome));
+        log.error(contextR4.newXmlParser().encodeResourceToString(outcome));
+      }
+      return outcome;
 
 //    IGenericClient fhirClient = contextR4.newRestfulGenericClient(targetServer+"/$validate");
 //    String content =  new org.hl7.fhir.r4.formats.JsonParser().composeString(resource);
 //  String response = fhirClient.transaction().withBundle(content).execute();
 //    OperationOutcome outcome  =  (OperationOutcome) new org.hl7.fhir.r4.formats.JsonParser().parse(response);
 
-    IGenericClient fhirClient = contextR4.newRestfulGenericClient(targetServer);
-    fhirClient.setEncoding(EncodingEnum.XML);
-
-    org.hl7.fhir.r4.model.Parameters inParams = new org.hl7.fhir.r4.model.Parameters();
-    inParams.addParameter().setName("resource").setResource(resource);
-
-    org.hl7.fhir.r4.model.Parameters outcomeParameters = fhirClient.operation().onServer().named("$validate")
-        .withParameters(inParams).execute();
-    OperationOutcome outcome = null;
-    for (ParametersParameterComponent parameterComponent : outcomeParameters.getParameter()) {
-      if ("return".equals(parameterComponent.getName())) {
-        outcome = (OperationOutcome) parameterComponent.getResource();
-      }
-    }
-    if (outcome == null) {
-      log.debug(contextR4.newXmlParser().encodeResourceToString(resource));
-      log.error("should have a return element");
-      log.error(contextR4.newXmlParser().encodeResourceToString(outcomeParameters));
-    } else {
-      if (getValidationFailures(outcome) > 0) {
-        log.debug(contextR4.newXmlParser().encodeResourceToString(resource));
-        log.debug("Validation Errors " + getValidationFailures(outcome));
-        log.error(contextR4.newXmlParser().encodeResourceToString(outcomeParameters));
-      }
-    }
-
-    return outcome;
+//    IGenericClient fhirClient = contextR4.newRestfulGenericClient(targetServer);
+//    fhirClient.setEncoding(EncodingEnum.XML);
+//
+//    org.hl7.fhir.r4.model.Parameters inParams = new org.hl7.fhir.r4.model.Parameters();
+//    inParams.addParameter().setName("resource").setResource(resource);
+//
+//    org.hl7.fhir.r4.model.Parameters outcomeParameters = fhirClient.operation().onServer().named("$validate")
+//        .withParameters(inParams).execute();
+//    OperationOutcome outcome = null;
+//    for (ParametersParameterComponent parameterComponent : outcomeParameters.getParameter()) {
+//      if ("return".equals(parameterComponent.getName())) {
+//        outcome = (OperationOutcome) parameterComponent.getResource();
+//      }
+//    }
+//    if (outcome == null) {
+//      log.debug(contextR4.newXmlParser().encodeResourceToString(resource));
+//      log.error("should have a return element");
+//      log.error(contextR4.newXmlParser().encodeResourceToString(outcomeParameters));
+//    } else {
+//      if (getValidationFailures(outcome) > 0) {
+//        log.debug(contextR4.newXmlParser().encodeResourceToString(resource));
+//        log.debug("Validation Errors " + getValidationFailures(outcome));
+//        log.error(contextR4.newXmlParser().encodeResourceToString(outcomeParameters));
+//      }
+//    }
+//
+//    return outcome;
   }
 
   public static void main(String[] args) throws Exception {

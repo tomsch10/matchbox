@@ -9,11 +9,9 @@ import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowire;
+import ca.uhn.fhir.jpa.starter.cql.StarterCqlR4Config;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.*;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -26,11 +24,13 @@ import ca.uhn.fhir.jpa.validation.JpaValidationSupportChain;
 import ch.ahdis.fhir.hapi.jpa.validation.ExtTermReadSvcR4;
 import ch.ahdis.fhir.hapi.jpa.validation.JpaExtendedValidationSupportChain;
 import ch.ahdis.fhir.hapi.jpa.validation.ValidationProvider;
+import javax.annotation.PostConstruct;
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
 @Configuration
 @Conditional(OnR4Condition.class)
+@Import(StarterCqlR4Config.class)
 public class FhirServerConfigR4 extends BaseJavaConfigR4 {
 
   @Autowired
@@ -43,6 +43,19 @@ public class FhirServerConfigR4 extends BaseJavaConfigR4 {
    */
   @Autowired
   AppProperties appProperties;
+
+  @PostConstruct
+  public void initSettings() {
+    if(appProperties.getSearch_coord_core_pool_size() != null) {
+		 setSearchCoordCorePoolSize(appProperties.getSearch_coord_core_pool_size());
+	 }
+	  if(appProperties.getSearch_coord_max_pool_size() != null) {
+		  setSearchCoordMaxPoolSize(appProperties.getSearch_coord_max_pool_size());
+	  }
+	  if(appProperties.getSearch_coord_queue_capacity() != null) {
+		  setSearchCoordQueueCapacity(appProperties.getSearch_coord_queue_capacity());
+	  }
+  }
 
   @Override
   public DatabaseBackedPagingProvider databaseBackedPagingProvider() {

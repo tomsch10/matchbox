@@ -1,8 +1,6 @@
 package ch.ahdis.fhir.hapi.jpa.validation;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,11 +39,14 @@ import ca.uhn.fhir.context.BaseRuntimeElementCompositeDefinition;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.support.DefaultProfileValidationSupport;
 import ca.uhn.fhir.context.support.IValidationSupport;
+import ca.uhn.fhir.interceptor.api.IInterceptorService;
 import ca.uhn.fhir.jpa.packages.NpmJpaValidationSupport;
 import ca.uhn.fhir.parser.DataFormatException;
 import ca.uhn.fhir.rest.annotation.Operation;
 import ca.uhn.fhir.rest.annotation.OperationParam;
 import ca.uhn.fhir.rest.api.EncodingEnum;
+import ca.uhn.fhir.rest.server.interceptor.validation.ValidationMessageSuppressingInterceptor;
+import ca.uhn.fhir.rest.server.util.CompositeInterceptorBroadcaster;
 import ca.uhn.fhir.util.ParametersUtil;
 import ca.uhn.fhir.util.StopWatch;
 import ca.uhn.fhir.validation.FhirValidator;
@@ -70,6 +71,9 @@ public class ValidationProvider {
 
   @Autowired
   protected DefaultProfileValidationSupport defaultProfileValidationSuport;
+  
+  @Autowired
+  protected IInterceptorService myInterceptorRegistry;
 
   private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ValidationProvider.class);
 
@@ -126,7 +130,7 @@ public class ValidationProvider {
       addedValidationMessages.add(m);
       return new ValidationResultWithExtensions(myFhirCtx, addedValidationMessages).toOperationOutcome();
     } else {
-      log.debug(contentString);
+      log.info(contentString);
     }
 
     String sha3Hex = new DigestUtils("SHA3-256").digestAsHex(contentString + (profile != null ? profile : ""));
@@ -137,12 +141,18 @@ public class ValidationProvider {
     }
 
     FhirValidator validatorModule = myFhirCtx.newValidator();
+    
+    ValidationMessageErrorIgnoreInterceptor interceptor = new ValidationMessageErrorIgnoreInterceptor();
+    interceptor.addMessageSuppressionPatterns("Unknown code 'http://terminology.hl7.org/CodeSystem/consentpolicycodes#ch-epr'");
+    interceptor.addMessageSuppressionPatterns("None of the codings provided are in the value set http://fhir.ch/ig/ch-rad-order/ValueSet/ch-rad-order-caveat-condition");
+    myInterceptorRegistry.registerInterceptor(interceptor);
 
     FhirInstanceValidator instanceValidator = new FhirInstanceValidator(myValidationSupport);
     instanceValidator.setBestPracticeWarningLevel(BestPracticeWarningLevel.Ignore);
     ArrayList<String> extensionDomains = new ArrayList<String>();
     instanceValidator.setCustomExtensionDomains(extensionDomains);
-
+    
+    validatorModule.setInterceptorBroadcaster(myInterceptorRegistry);
     validatorModule.registerValidatorModule(instanceValidator);
 
     // the $validate operation can be called in different ways, see

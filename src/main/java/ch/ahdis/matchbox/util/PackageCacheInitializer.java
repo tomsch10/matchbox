@@ -1,6 +1,8 @@
 package ch.ahdis.matchbox.util;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -57,8 +59,16 @@ public class PackageCacheInitializer {
 
   public static List<ImplementationGuide> getImplementationGuides() {
     Yaml yaml = new Yaml();
-    PackageCacheInitializer pci = new PackageCacheInitializer();
-    InputStream inputStream = yaml.getClass().getClassLoader().getResourceAsStream("application.yaml");
+//    PackageCacheInitializer pci = new PackageCacheInitializer();
+//    InputStream inputStream = yaml.getClass().getClassLoader().getResourceAsStream("application.yaml");
+    File initialFile = new File("./with-preload/application.yaml");
+    InputStream inputStream;
+    try {
+      inputStream = new FileInputStream(initialFile);
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+      return null;
+    }    
     Map<String, Object> obj = yaml.load(inputStream);
     List<ImplementationGuide> igs = getIgs(obj);
     return igs;

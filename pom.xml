@@ -14,7 +14,7 @@
     <parent>
         <groupId>ca.uhn.hapi.fhir</groupId>
         <artifactId>hapi-fhir</artifactId>
-        <version>5.3.0-SNAPSHOT</version>
+		  <version>5.5.0-PRE5-SNAPSHOT</version>
     </parent>
 
     <artifactId>hapi-fhir-jpaserver-starter</artifactId>
@@ -22,7 +22,7 @@
     <properties>
         <java.version>11</java.version>
         <spring_boot_version>2.3.4.RELEASE</spring_boot_version>
-	    <fhir.core.version>5.2.17-SNAPSHOT</fhir.core.version>
+	    <fhir.core.version>5.4.6-SNAPSHOT</fhir.core.version>
     </properties>
 
     <prerequisites>
@@ -42,6 +42,7 @@
             <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
         </repository>
     </repositories>
+
 
     <dependencies>
         <dependency>
@@ -126,6 +127,11 @@
             <artifactId>org.hl7.fhir.validation</artifactId>
             <version>${fhir.core.version}</version>
         </dependency>
+        <dependency>
+            <groupId>ca.uhn.hapi.fhir</groupId>
+            <artifactId>hapi-fhir-jpaserver-cql</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- This dependency includes the JPA EMPI Server -->
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
@@ -145,7 +151,6 @@
             <artifactId>hapi-fhir-testpage-overlay</artifactId>
             <version>${project.version}</version>
             <classifier>classes</classifier>
-
         </dependency>
 
         <!-- HAPI-FHIR uses Logback for logging support. The logback library is included automatically by Maven as a part of the hapi-fhir-base dependency, but you also need to include a logging library. Logback
@@ -166,6 +171,13 @@
         <dependency>
             <groupId>org.thymeleaf</groupId>
             <artifactId>thymeleaf</artifactId>
+        </dependency>
+
+        <!-- Needed for parsing the config -->
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>1.28</version>
         </dependency>
 
         <!-- Used for CORS support -->
@@ -318,7 +330,6 @@
             <version>${spring_boot_version}</version>
         </dependency>
 
-
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -344,7 +355,22 @@
 
     <build>
 
-		<!-- Tells Maven to name the generated WAR file as hapi-fhir-jpavalidator.war -->
+        <pluginManagement>
+            <plugins>
+                <!--
+                There is a bug in 3.1.2 that prevents go-offline from working
+                Reported here:
+                https://issues.apache.org/jira/browse/MDEP-739
+                -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>3.1.1</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <!-- Tells Maven to name the generated WAR file as ROOT.war -->
 		<finalName>hapi-fhir-jpavalidator</finalName>
 
         <plugins>
@@ -397,6 +423,7 @@
                             <Build-Time>${maven.build.timestamp}</Build-Time>
                         </manifestEntries>
                     </archive>
+                    <attachClasses>true</attachClasses>
                     <overlays>
                         <overlay>
                             <groupId>ca.uhn.hapi.fhir</groupId>

@@ -4,6 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+
+import ca.uhn.fhir.context.FhirVersionEnum;
+import ca.uhn.fhir.jpa.api.config.DaoConfig.ClientIdStrategyEnum;
+import ca.uhn.fhir.jpa.model.entity.NormalizedQuantitySearchLevel;
+import ca.uhn.fhir.rest.api.EncodingEnum;
+import com.google.common.collect.ImmutableList;
 import org.hl7.fhir.r4.model.Bundle;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -16,21 +22,26 @@ import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.jpa.api.config.DaoConfig.ClientIdStrategyEnum;
 import ca.uhn.fhir.jpa.model.entity.NormalizedQuantitySearchLevel;
 import ca.uhn.fhir.rest.api.EncodingEnum;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @ConfigurationProperties(prefix = "hapi.fhir")
 @Configuration
 @EnableConfigurationProperties
 public class AppProperties {
 
+  private Boolean cql_enabled = false;
   private Boolean mdm_enabled = false;
   private Boolean allow_cascading_deletes = false;
   private Boolean allow_contains_searches = true;
   private Boolean allow_external_references = false;
   private Boolean allow_multiple_delete = false;
   private Boolean allow_override_default_search_params = true;
-  private Boolean allow_placeholder_references = true;
-  private Boolean auto_create_placeholder_reference_targets = true;
+  private Boolean auto_create_placeholder_reference_targets = false;
   private Boolean enable_index_missing_fields = false;
+  private Boolean enable_index_contained_resource = false;
   private Boolean enable_repository_validating_interceptor = false;
   private Boolean enforce_referential_integrity_on_delete = true;
   private Boolean enforce_referential_integrity_on_write = true;
@@ -57,7 +68,7 @@ public class AppProperties {
   private Boolean narrative_enabled = true;
 
   private Validation validation = new Validation();
-  private Map<String, Tester> tester = ImmutableMap.of("home", new Tester());
+  private Map<String, Tester> tester = null;
   private Logger logger = new Logger();
   private Subscription subscription = new Subscription();
   private Cors cors = null;
@@ -68,6 +79,27 @@ public class AppProperties {
   private NormalizedQuantitySearchLevel normalized_quantity_search_level = NormalizedQuantitySearchLevel.NORMALIZED_QUANTITY_SEARCH_NOT_SUPPORTED;
 
   private Boolean only_install_packages = false;
+  private Integer search_coord_core_pool_size = 20;
+  private Integer search_coord_max_pool_size = 100;
+  private Integer search_coord_queue_capacity = 200;
+  private Boolean use_apache_address_strategy = false;
+  private Boolean use_apache_address_strategy_https = false;
+
+  public Boolean getUse_apache_address_strategy() {
+    return use_apache_address_strategy;
+  }
+
+  public void setUse_apache_address_strategy(Boolean use_apache_address_strategy) {
+    this.use_apache_address_strategy = use_apache_address_strategy;
+  }
+
+    public Boolean getUse_apache_address_strategy_https() {
+    return use_apache_address_strategy_https;
+  }
+
+  public void setUse_apache_address_strategy_https(Boolean use_apache_address_strategy_https) {
+    this.use_apache_address_strategy_https = use_apache_address_strategy_https;
+  }
 
   public Integer getDefer_indexing_for_codesystems_of_size() {
     return defer_indexing_for_codesystems_of_size;
@@ -91,6 +123,14 @@ public class AppProperties {
 
   public void setPartitioning(Partitioning partitioning) {
     this.partitioning = partitioning;
+  }
+
+  public Boolean getCql_enabled() {
+    return cql_enabled;
+  }
+
+  public void setCql_enabled(Boolean cql_enabled) {
+    this.cql_enabled = cql_enabled;
   }
 
   public Boolean getMdm_enabled() {
@@ -213,14 +253,6 @@ public class AppProperties {
     this.allow_override_default_search_params = allow_override_default_search_params;
   }
 
-  public Boolean getAllow_placeholder_references() {
-    return allow_placeholder_references;
-  }
-
-  public void setAllow_placeholder_references(Boolean allow_placeholder_references) {
-    this.allow_placeholder_references = allow_placeholder_references;
-  }
-
   public Boolean getAuto_create_placeholder_reference_targets() {
     return auto_create_placeholder_reference_targets;
   }
@@ -245,15 +277,23 @@ public class AppProperties {
     this.enable_index_missing_fields = enable_index_missing_fields;
   }
 
-  public Boolean getEnable_repository_validating_interceptor() {
-    return enable_repository_validating_interceptor;
-  }
+	public Boolean getEnable_index_contained_resource() {
+		return enable_index_contained_resource;
+	}
 
-  public void setEnable_repository_validating_interceptor(Boolean theEnable_repository_validating_interceptor) {
-    enable_repository_validating_interceptor = theEnable_repository_validating_interceptor;
-  }
+	public void setEnable_index_contained_resource(Boolean enable_index_contained_resource) {
+		this.enable_index_contained_resource = enable_index_contained_resource;
+	}
 
-  public Boolean getEnforce_referential_integrity_on_delete() {
+	public Boolean getEnable_repository_validating_interceptor() {
+		return enable_repository_validating_interceptor;
+	}
+
+	public void setEnable_repository_validating_interceptor(Boolean theEnable_repository_validating_interceptor) {
+		enable_repository_validating_interceptor = theEnable_repository_validating_interceptor;
+	}
+
+	public Boolean getEnforce_referential_integrity_on_delete() {
     return enforce_referential_integrity_on_delete;
   }
 
@@ -370,7 +410,11 @@ public class AppProperties {
   }
 
   public void setReuse_cached_search_results_millis(Long reuse_cached_search_results_millis) {
-    this.reuse_cached_search_results_millis = reuse_cached_search_results_millis;
+    if (Objects.equals(reuse_cached_search_results_millis, 0L)) {
+      this.reuse_cached_search_results_millis = null;
+    } else {
+      this.reuse_cached_search_results_millis = reuse_cached_search_results_millis;
+    }
   }
 
   public Map<String, Tester> getTester() {
@@ -413,7 +457,25 @@ public class AppProperties {
     this.normalized_quantity_search_level = normalized_quantity_search_level;
   }
 
-  public static class Cors {
+  public Integer getSearch_coord_core_pool_size() { return search_coord_core_pool_size; }
+
+  public void setSearch_coord_core_pool_size(Integer search_coord_core_pool_size) {
+    this.search_coord_core_pool_size = search_coord_core_pool_size;
+  }
+
+  public Integer getSearch_coord_max_pool_size() { return search_coord_max_pool_size; }
+
+  public void setSearch_coord_max_pool_size(Integer search_coord_max_pool_size) {
+    this.search_coord_max_pool_size = search_coord_max_pool_size;
+  }
+
+  public Integer getSearch_coord_queue_capacity() { return search_coord_queue_capacity; }
+
+  public void setSearch_coord_queue_capacity(Integer search_coord_queue_capacity) {
+  	 this.search_coord_queue_capacity = search_coord_queue_capacity;
+  }
+
+public static class Cors {
     private Boolean allow_Credentials = true;
     private List<String> allowed_origin = ImmutableList.of("*");
 
@@ -477,8 +539,8 @@ public class AppProperties {
 
   public static class Tester {
 
-    private String name = "Local Tester";
-    private String server_address = "http://localhost:8080/fhir";
+    private String name;
+    private String server_address;
     private Boolean refuse_to_fetch_third_party_urls = true;
     private FhirVersionEnum fhir_version = FhirVersionEnum.R4;
 
@@ -570,6 +632,7 @@ public class AppProperties {
   public static class Partitioning {
 
     private Boolean partitioning_include_in_search_hashes = false;
+    private Boolean allow_references_across_partitions = false;
 
     public Boolean getPartitioning_include_in_search_hashes() {
       return partitioning_include_in_search_hashes;
@@ -577,6 +640,13 @@ public class AppProperties {
 
     public void setPartitioning_include_in_search_hashes(Boolean partitioning_include_in_search_hashes) {
       this.partitioning_include_in_search_hashes = partitioning_include_in_search_hashes;
+    }
+    public Boolean getAllow_references_across_partitions() {
+      return allow_references_across_partitions;
+    }
+
+    public void setAllow_references_across_partitions(Boolean allow_references_across_partitions) {
+      this.allow_references_across_partitions = allow_references_across_partitions;
     }
   }
 
