@@ -10,15 +10,18 @@ spring:
       enabled: false
 server:
   servlet:
-    context-path: /hapi-fhir-jpavalidator
+    context-path: /matchbox-validator
 hapi:
   fhir:
     fhir_version: R4
     defer_indexing_for_codesystems_of_size: 0
+    cors:
+      allowed_origin:
+        - '*'
     tester:
         home:
-          name: Local Tester©
-          server_address: 'http://localhost:8080/fhir'
+          name: Local Tester
+          server_address: 'http://localhost:8080/matchbox-validator/fhir'
           refuse_to_fetch_third_party_urls: false
           fhir_version: R4
         global:
