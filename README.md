@@ -54,6 +54,26 @@ Then, browse to the following link to use the server:
 
 [http://localhost:8080/matchbox-validator/](http://localhost:8080/matchbox-validator/)
 
+## Using docker-compose with a persistent postgreSQL database
+
+The database will be stored in the "data" directory. The configuration can be found in the "with-postgres" directory.
+
+```
+mkdir data
+mvn clean package -DskipTests
+docker-compose up
+```
+
+Export the DB data:
+```
+docker-compose exec -T matchbox-test-db pg_dump -Fc -U matchbox matchbox > mydump
+```
+
+Reimport the DB data:
+```
+docker-compose exec -T matchbox-test-db pg_restore -c -U matchbox -d matchbox < mydump
+```
+
 
 ## building with Docker
 
