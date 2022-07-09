@@ -26,6 +26,8 @@ import ca.uhn.fhir.jpa.config.JpaConfig;
 import ca.uhn.fhir.jpa.config.r4.JpaR4Config;
 import ca.uhn.fhir.jpa.starter.annotations.OnR4Condition;
 import ca.uhn.fhir.jpa.starter.cql.StarterCqlR4Config;
+import ca.uhn.fhir.jpa.term.api.ITermCodeSystemStorageSvc;
+import ca.uhn.fhir.jpa.term.api.ITermConceptMappingSvc;
 import ca.uhn.fhir.jpa.term.api.ITermReadSvcR4;
 import ca.uhn.fhir.jpa.validation.ValidatorPolicyAdvisor;
 import ca.uhn.fhir.jpa.validation.ValidatorResourceFetcher;
@@ -34,6 +36,8 @@ import ch.ahdis.fhir.hapi.jpa.validation.CachingValidationSupport;
 import ch.ahdis.fhir.hapi.jpa.validation.ExtTermReadSvcR4;
 import ch.ahdis.fhir.hapi.jpa.validation.ExtUnknownCodeSystemWarningValidationSupport;
 import ch.ahdis.fhir.hapi.jpa.validation.JpaExtendedValidationSupportChain;
+import ch.ahdis.fhir.hapi.jpa.validation.NullTermCodeSystemStorageSvcImpl;
+import ch.ahdis.fhir.hapi.jpa.validation.NullTermConceptMappingSvcImpl;
 import ch.ahdis.fhir.hapi.jpa.validation.ValidationProvider;
 import ch.ahdis.matchbox.mappinglanguage.ConvertingWorkerContext;
 import ch.ahdis.matchbox.mappinglanguage.StructureDefinitionProvider;
@@ -81,15 +85,15 @@ public class FhirServerConfigR4 {
     return new ExtTermReadSvcR4();
   }
   
-//  @Bean
-//  public ITermCodeSystemStorageSvc termCodeSystemStorageSvc() {
-//    return new NullTermCodeSystemStorageSvcImpl();
-//  }
+  @Bean
+  public ITermCodeSystemStorageSvc termCodeSystemStorageSvc() {
+    return new NullTermCodeSystemStorageSvcImpl();
+  }
   
-//  @Bean
-//  public ITermConceptMappingSvc termConceptMappingSvc() {
-//    return new NullTermConceptMappingSvcImpl();
-//  }
+  @Bean
+  public ITermConceptMappingSvc termConceptMappingSvc() {
+    return new NullTermConceptMappingSvcImpl();
+  }
 
   @Bean(autowire = Autowire.BY_TYPE)
   public ValidationProvider validationProvider() {

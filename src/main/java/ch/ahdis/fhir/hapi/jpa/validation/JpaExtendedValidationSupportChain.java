@@ -29,9 +29,9 @@ public class JpaExtendedValidationSupportChain extends JpaValidationSupportChain
 	@Qualifier("myJpaValidationSupport")
 	public IValidationSupport myJpaValidationSupport;
 
-	@Qualifier("myDefaultProfileValidationSupport")
-	@Autowired
-	private IValidationSupport myDefaultProfileValidationSupport;
+//	@Qualifier("myDefaultProfileValidationSupport")
+//	@Autowired
+//	private IValidationSupport myDefaultProfileValidationSupport;
 	@Autowired
 	private ITermReadSvc myTerminologyService;
 	//@Autowired
@@ -78,7 +78,7 @@ public class JpaExtendedValidationSupportChain extends JpaValidationSupportChain
 		// matchbox 2.1.0 we moved DefaultValidaton Support down below, because it looks like myDefaultProfileValidationSupport contains a complete DICOM CodeSystem and
 		// we want the one from hl7.terminology 3.1.0 (check http://localhost:8080/matchbox/fhir/CodeSystem?url=http://dicom.nema.org/resources/ontology/DCM)
 		// https://github.com/ahdis/matchbox/issues/50
-    addValidationSupport(myDefaultProfileValidationSupport);
+//    addValidationSupport(myDefaultProfileValidationSupport);
 	}
 	
 		

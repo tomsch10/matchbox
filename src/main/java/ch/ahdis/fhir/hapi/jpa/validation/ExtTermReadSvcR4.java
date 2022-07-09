@@ -4,10 +4,13 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import java.util.Optional;
 
+import javax.transaction.Transactional;
+
 import org.hl7.fhir.instance.model.api.IAnyResource;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.CodeSystem.CodeSystemContentMode;
+import org.hl7.fhir.r4.model.ValueSet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -17,6 +20,7 @@ import ca.uhn.fhir.context.support.ConceptValidationOptions;
 import ca.uhn.fhir.context.support.IValidationSupport;
 import ca.uhn.fhir.context.support.ValidationSupportContext;
 import ca.uhn.fhir.jpa.api.dao.IDao;
+import ca.uhn.fhir.jpa.model.entity.ResourceTable;
 import ca.uhn.fhir.jpa.term.TermReadSvcR4;
 import ca.uhn.fhir.util.CoverageIgnore;
 import ca.uhn.fhir.util.FhirVersionIndependentConcept;
@@ -27,6 +31,13 @@ public class ExtTermReadSvcR4 extends TermReadSvcR4 {
   
   @Autowired
   private PlatformTransactionManager myTransactionManager;
+  
+  @Override
+  @Transactional
+  public void storeTermValueSet(ResourceTable theResourceTable, ValueSet theValueSet) {
+    // FIXME we don't want to store
+  }
+
 
 
   @Override
