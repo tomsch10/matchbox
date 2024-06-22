@@ -68,6 +68,7 @@ import org.hl7.fhir.utilities.xhtml.NodeType;
 import org.hl7.fhir.utilities.xhtml.XhtmlNode;
 import org.hl7.fhir.validation.IgLoader;
 import org.hl7.fhir.validation.ValidationEngine;
+import org.hl7.fhir.validation.cli.services.StandAloneValidatorFetcher;
 import org.hl7.fhir.validation.instance.InstanceValidator;
 import org.hl7.fhir.validation.cli.services.IPackageInstaller;
 import org.hl7.fhir.validation.cli.services.StandAloneValidatorFetcher;
@@ -206,7 +207,6 @@ public class MatchboxEngine extends ValidationEngine {
 			engine.setPcm(this.getFilesystemPackageCacheManager());
 			engine.setPolicyAdvisor(new ValidationPolicyAdvisor(ReferenceValidationPolicy.CHECK_VALID));
 			engine.setAllowExampleUrls(true);
-	  
 			return engine;
 		}
 
