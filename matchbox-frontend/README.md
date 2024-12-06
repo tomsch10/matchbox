@@ -25,12 +25,12 @@ if you are not using the devcontainer from this project with [VS Code Remote Dev
 ```
 npm install -g @angular/cli
 npm install
-ng build --configuration development
+ng build
 ```
 
 and then
 
-ng serve --configuration development
+ng serve
 
 ## usage
 

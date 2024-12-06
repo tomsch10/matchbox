@@ -363,6 +363,14 @@ export class ValidateComponent implements AfterViewInit {
     this.runValidation(entry);
   }
 
+  onAiButtonClick() {
+
+    console.log("operationoutocome");
+    console.log (this.selectedEntry.result.operationOutcome);
+    console.log("resource");
+    console.log(this.selectedEntry.resource);
+  }
+
   /**
    * Toggle the display of the settings pane.
    */
