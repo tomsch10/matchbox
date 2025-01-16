@@ -179,6 +179,13 @@
       [ngClass]="{ active: editorContent == CodeEditorContent.OPERATION_OUTCOME }"
       >Operation outcome</span
     >
+    <!--"AI result" als zusätzliches Feld im rechten unteren Bereich-->
+    <span
+      (click)="changeCodeEditorContent(CodeEditorContent.MATCHSPARK_RESULT)"
+      class="editor-content-selector"
+      [ngClass]="{ active: editorContent == CodeEditorContent.MATCHSPARK_RESULT }"
+      >AI result</span
+    >
 
     <div id="editor"></div>
   </div>

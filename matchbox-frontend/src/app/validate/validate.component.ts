@@ -13,6 +13,7 @@ import { FormControl, Validators } from '@angular/forms';
 import { StructureDefinition } from './structure-definition';
 import { ToastrService } from 'ngx-toastr';
 import {ValidationCodeEditor} from "./validation-code-editor";
+import { HttpClient } from '@angular/common/http';
 
 const INDENT_SPACES = 2;
 
@@ -58,6 +59,7 @@ export class ValidateComponent implements AfterViewInit {
     data: FhirConfigService,
     private cd: ChangeDetectorRef,
     private toastr: ToastrService,
+    private httpClient: HttpClient, // dem Constructor noch einen httpClient hinzufügen
   ) {
     this.client = data.getFhirClient();
 
@@ -363,12 +365,31 @@ export class ValidateComponent implements AfterViewInit {
     this.runValidation(entry);
   }
 
+  /**
+   * Event handler for the click on the "AI Analyze" button.
+   * Creates a HTTP-Request to the Java-Server
+   */
   onAiButtonClick() {
 
+    // zum Testen: in der Console loggen, ob etwas passiert
     console.log("operationoutocome");
     console.log (this.selectedEntry.result.operationOutcome);
     console.log("resource");
     console.log(this.selectedEntry.resource);
+
+
+    // dem FormData-Element die gewünschten Anhänge mitgeben: die FHIR-Ressource und das OperationOutcome, jeweils als String
+    const formData = new FormData();
+    formData.append("inputResource", this.currentResource.content); // als String
+    formData.append("inputOperationOutcome", JSON.stringify(this.selectedEntry.result.operationOutcome)); //auch als String
+
+    // die API des Java-Services angeben, http-post-request erstellen, response erhalten
+    this.httpClient.post('http://localhost:8080/validate', formData,{responseType: 'text'})
+      .subscribe(response => {
+        console.warn(response); // auch ein Test
+        this.selectedEntry.aiRecommendation = response;
+        this.editor.updateCodeEditorContent(this.selectedEntry, CodeEditorContent.MATCHSPARK_RESULT);
+    });
   }
 
   /**
@@ -583,4 +604,5 @@ class UploadedFile {
 export enum CodeEditorContent {
   RESOURCE_CONTENT,
   OPERATION_OUTCOME,
+  MATCHSPARK_RESULT, // das MatchSpark_Result als Tab ergänzt
 }

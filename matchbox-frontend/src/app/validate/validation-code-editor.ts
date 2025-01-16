@@ -103,14 +103,22 @@ export class ValidationCodeEditor {
         this.editor.getSession().setMode('ace/mode/xml');
       }
       this.updateEditorIssues(selectedEntry);
-    } else {
-      if (selectedEntry.result !== undefined && 'operationOutcome' in selectedEntry.result) {
+    } else 
+      if (selectedEntry.result !== undefined && 'operationOutcome' in selectedEntry.result && editorContent == CodeEditorContent.OPERATION_OUTCOME) {
         this.editor.setValue(JSON.stringify(selectedEntry.result.operationOutcome, null, this.indentSpace), -1);
         this.editor.getSession().setMode('ace/mode/json');
-      } else {
+      }
+
+      // wenn es ein AI result gibt, dann den String (aiRecommendation) hier dem CodeEditor übergeben
+      else if (editorContent == CodeEditorContent.MATCHSPARK_RESULT) {
+         this.editor.setValue(selectedEntry.aiRecommendation, -1);
+         this.editor.getSession().setMode('ace/mode/txt');
+         }
+
+      else {
         this.clearContent();
       }
       this.clearAnnotations();
-    }
+      
   }
 }

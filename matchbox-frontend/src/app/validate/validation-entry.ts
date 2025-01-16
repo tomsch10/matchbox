@@ -8,6 +8,7 @@ export class ValidationEntry {
   resourceId: string;
   readonly mimetype: string;
   result: OperationResult | undefined;
+  aiRecommendation: string; // new String "aiRecommendation"
   readonly profiles: string[] = [];
   selectedProfile: string;
   ig?: string;
