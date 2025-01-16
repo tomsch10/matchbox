@@ -13,7 +13,7 @@ import { FormControl, Validators } from '@angular/forms';
 import { StructureDefinition } from './structure-definition';
 import { ToastrService } from 'ngx-toastr';
 import {ValidationCodeEditor} from "./validation-code-editor";
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 const INDENT_SPACES = 2;
 
@@ -384,7 +384,10 @@ export class ValidateComponent implements AfterViewInit {
     formData.append("inputOperationOutcome", JSON.stringify(this.selectedEntry.result.operationOutcome)); //auch als String
 
     // die API des Java-Services angeben, http-post-request erstellen, response erhalten
-    this.httpClient.post('http://localhost:8080/validate', formData,{responseType: 'text'})
+    const headers = new HttpHeaders({
+      'Accept': 'text/plain',
+  })
+    this.httpClient.post('http://localhost:8080/validate', formData,{headers,responseType: 'text'})
       .subscribe(response => {
         console.warn(response); // auch ein Test
         this.selectedEntry.aiRecommendation = response;
